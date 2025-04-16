@@ -1,0 +1,222 @@
+---
+title: "How To Guarantee Your Future Child Will Play in the National Hockey League"
+author: "Tessa Volpe"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r loadPackages, include = FALSE, warning = FALSE}
+#Load necessary R packages
+library(tidyverse)
+library(countrycode)
+```
+
+## Introduction
+
+Hockey is growing in popularity in the US. The fast paced, action packed, aggressive game filled with passionate players is pure entertainment. It is any hockey-loving parent's dream to see their child make it the NHL (possible to live vicariously through them... but who's to say). Is there a way in which you could give your future child the best odds before they are even born? This data analysis will look at active NHL player data collected from 2008 to 2023. I will explore patterns in categorical factors such as names, birthdays, and nationalities of NHL players to see if any trends arise that can set up a future in *The Show* for your kid. Are there common characteristics among NHL players that might increase the chances of reaching the top? Let's dive into the data to find out!
+
+```{r readFile, include = FALSE}
+#Read data set into an R data frame for use
+nhl_players <- read.csv("nhl_players.csv", na = "")
+```
+
+## Context
+
+The data set being used is titled [NHL Database MoneyPuck](https://www.kaggle.com/datasets/mexwell/nhl-database/data)
+This data set was created by Mexwell and is available on Kaggle.com. It contains data on 3,034 active NHL players from 2008 to 2023. The data set contains 10 different variables:
+
+1. Unique identifier for each player
+1. Player's name
+1. What position the player plays
+1. What team the player is on
+1. Player's date of birth (YYYY-MM-DD)
+1. Player's weight (lbs)
+1. Player's height (ft)
+1. Player's nationality
+1. What hand the player shoot/catch with
+1. What number the player wears
+
+By focusing on the most common names, birth dates, and home countries, I aim to uncover any patterns that may give clues about categorical characteristics that make a successful NHL candidate.
+
+```{r makeDataUsable, include = FALSE}
+#Isolate players names and each part of their birth date
+
+nhl_players<- nhl_players |>
+  separate(name, 
+           c("firstName", "lastName"), 
+           sep = " ", 
+           extra = "merge")|>     #For players with 2 name last names (ex. Van Brabant)
+  separate(birthDate, 
+           c("birthYear", "birthMonth", "birthDay"), 
+           sep = "-")
+```
+
+## Visualization 1
+
+First, we will find the most common names among recent NHL players.
+
+```{r nameCounts, include = FALSE}
+#Total up the count for each first name
+nhl_players_names <- nhl_players |>
+  count(firstName, name = "count") |>
+  arrange(desc(count))
+
+nhl_players_top_names <- head(nhl_players_names, 20)  #Only want top 20 occurring names
+```
+
+### Graph
+
+```{r createNameGraph}
+ggplot(nhl_players_top_names, aes(x = reorder(firstName, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "salmon") +
+  labs(
+    title = "Top 20 Most Common First Names in the NHL",
+    subtitle = "NHL player data from 2008-2023",
+    caption = "Data from Kaggle.com user Mexwell",
+    x = "Player's Name",
+    y = "Count"
+      ) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5))    #rotate for readability
+```
+
+### Analysis
+
+**Choice of Geometric Object:**
+I used a Bar chart to depict the count of occurrences of each first name. Bar charts are ideal for displaying categorical data as the differing heights of the bars clearly communicates the frequency of each name. 
+
+**Visual Representation of Variables:**
+The x-axis represents the player's first names and each bar corresponds to a unique first name. They are ordered by descending frequency, so names with the highest counts are placed at the left side of the plot. This arrangement makes it easy to quickly identify the most common names.
+
+The y-axis represents the count of occurrences for each first name and the height of each bar demonstrates the frequency of that name among NHL players. This makes it very simple to compare frequencies across the different names.
+
+The color helps the bars stand out while maintaining a cohesive theme throughout the document. The use of one color is simple and avoids unnecessary distractions
+   
+**Interpretability:**
+I transformed the data by isolating the top 20 most common names. As there were 800+ different names in the data, including them all made the bar chart completely overrun and unreadable. Since I was looking for only the most common, I was able to focus on the top 20 to have distinguishable bars. The axis labels are clear and tell exactly what each axis represents. The title and subtitle provide context to improve understanding. These elements help me to quickly understand what the graph is showing.
+
+**Observations:**
+Since 2008, a total of 3,034 players have played in the NHL, with 852 unique first names. The names "Ryan" and "Matt" are the most common, appearing 56 and 54 times, respectively. This may indicate that certain names are more culturally prevalent or popular within hockey communities possibly due to regional naming patterns. However, this discovery does not suggest that having these common names plays into one's chances of making it to the NHL. This phenomenon likely reflects global naming trends rather than any direct connection to success in a hockey career. Statistically, it is expected that more widely used names will appear more frequently in the NHL simply due to their prevalence in the global population.
+
+## Visualization 2
+
+Next, we will look at the most common birth months of recent NHL players.
+
+```{r monthCounts, include = FALSE}
+total_players <- nrow(nhl_players) #count rows
+
+nhl_players_month <- nhl_players |>
+  filter(!is.na(birthMonth)) |>
+  count(birthMonth, name = "count")|>
+  mutate("percentage" = (count / total_players) * 100) #percent of total players born in each month, includes missing
+
+```
+
+### Graph
+
+```{r createMonthGraph}
+ggplot(nhl_players_month, aes(x = birthMonth, y = percentage)) +
+  geom_bar(stat = "identity", fill = "tomato") +      #Y values are provided
+  labs(
+    title = "Distribution of NHL Players by Birth Month",
+    subtitle = "NHL player data from 2008-2023",
+    caption = "Data from Kaggle.com user Mexwell",
+    x = "Birth Month",
+    y = "Percentage"
+      ) +
+  scale_x_discrete(labels = c("Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"))
+```
+
+### Analysis
+
+**Choice of Geometric Object:**
+I again used a Bar chart to depict the percentage of players born in each month. Bar charts are ideal for displaying categorical data as the differing heights of each bar clearly communicates the percentage of NHL players born in each month.
+
+**Visual Representation of Variables:**
+The x-axis represents the birth month from January to December. The bars are in chronological order to ensure easy interpretation of the timing patterns in the distribution
+
+The y-axis represents the proportion of NHL players born in each month. The height of each bar corresponds to the percentage of players born in that month. This makes it easy to compare the relative frequency of players born in each month.
+
+The color helps each bar stand out while continuing with a cohesive color theme of the document. The use of one color is simple and avoids unnecessary distractions.
+   
+**Interpretability:**
+I first transformed the data by organizing the months in chronological order so that the time progression was clear and I could see differences along an intuitive order. I also used `scale_x_discrete()` to rename the numerical month designations to the month's names on the x-axis. The title, subtitle, and caption provide context to enable understanding of what the graph is showing.
+
+**Observations:**
+This bar chart shows that February, followed by March are the most common birth months among recent NHL players. Overall, players born at the beginning of the year are more present in the NHL. This does suggest a specific trend to hockey. August, July, October, and September are the [most common birth months](https://www.worldatlas.com/society/the-most-common-birthdays-in-the-world.html) while February is the least common, partially due to it having the fewest days. This trend is likely attributed to age cut-offs for youth hockey leagues where a player begins their development. Players born in earlier months are more likely to be among the oldest in their age group when they start playing competitive sports. This may give them a physical advantage, and the subsequent ability to make it further in the sport.
+
+## Visualization 3
+
+Next, we will look at the nationality distibution among recent NHL players.
+
+```{r narrowToCountries, include = FALSE}
+nhl_players_country <- nhl_players |>
+  filter(!is.na(nationality)) |>
+  select(nationality) |>
+  count(nationality, name = "count")|>
+  rename("region" = nationality)
+```
+
+```{r setUpMapData, include = FALSE, warning = FALSE}
+world <- map_data("world")
+
+world <- world |>
+  mutate(region = countrycode(region, 
+                              origin = "country.name", 
+                              destination = "iso3c"))
+```
+
+### Map
+
+```{r createMap}
+mapdata <- left_join(world, nhl_players_country, by = "region")
+
+ggplot(mapdata, aes(x = long, y = lat, group = group)) +
+  geom_polygon(aes(fill = count), color = "black") +
+  scale_fill_gradient(
+    low = "lightcoral",
+    high = "darkred", 
+    na.value   = "lightgray") +
+  labs(
+    title = "Distribution of NHL Players By Nationality",
+    subtitle = "NHL player data from 2008-2023",
+    fill = "# of Players",
+    caption = "Data from Kaggle.com user Mexwell"
+    ) +
+  theme(
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    legend.ticks = element_blank()
+  )
+```
+
+#### Analysis
+
+**Choice of Geometric Object:**
+I used a polygon geometric object as I was working with geographic data. Polygons are the most appropriate way to represent shapes such as countries. Each country is considered an individual shape, which allowed me to visualize the spatial distribution of NHL players. How each country's number of players is distributed is clearly depicted. (I did reference a [Youtube tutorial](https://youtu.be/AgWgPSZ7Gp0?si=x9CtSsvAAGq3PpvO) on how to create maps through ggplot2.)
+
+**Visual Representation of Variables:**
+The x-axis and y-axis represent longitude and latitude provided through `map_data(world)`.
+
+The fill color of each polygon represents the `count`, or the number of NHL players in each country. This serves to make the data visually intuitive.
+
+The color gradient is monochromatic to provide clear contrast between the countries with few players, and those with many. The darker shade, often used to symbolize intensity, highlights countries with higher number of NHL players. The gradient helps me to quickly grasp the distribution of player's home nations and continues with the while continuing the cohesive color theme.
+   
+**Interpretability:**
+The x-axis and y-axis scales are longitude and latitude to accurately scale the map linearly. Since this is a map of geographic regions, axis labels and ticks are not necessary and add clutter. The purpose is to convey information about geographic regions, not specific coordinates. The legend for # of Players is used to explain the fill colors (from light to dark red) explaining that a darker fill color represents a larger count of players. The title, subtitle, legend title, and caption provide context to enable understanding of what the graph is showing.
+
+**Observations:**
+This map depicts that the majority of NHL players come from certain countries, particularly those with strong hockey cultures such as Canada, The USA, and Sweden. This map illustrates how the global reach of hockey is concentrated in certain regions, such as North America and Europe, where the sport is popular and accessible.
+
+## Limitations
+
+While geographic location and birth timing likely have influence, making it sound like these are the only factors that determine hockey success significantly oversimplifies the path to the league. Many other factors, such as talent, skill development, financial support, coaching, and personal drive, are also crucial for a player's success. The idea that a child should be born in a particular month (like February) assumes that age-based cutoffs in youth hockey leagues have a significant impact on future success. While this can influence early development, it’s important to note that many players who are born in other months also make it to the NHL.
+
+## Conclusion
+
+While a common name might not impact a player's prospects, if you're looking to increase your future child's chances of making it to the National Hockey League, consider relocating to one of the established hockey hotbeds. The strong representation of certain countries in the league reveal a clear pattern: geography matters. Countries with a deep-rooted hockey culture, like Canada, provide more opportunities for young players to develop and get noticed. Additionally, the timing of birth can have an influence, with players born in certain months potentially having an advantage in developmental hockey leagues.
+
+In short, to give your child the best shot at a career in the NHL, consider moving to Canada and, if possible, planning their birth for February. It’s a mix of location, timing, and culture that could make all the difference. Good luck, and go Bruins!
